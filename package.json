@@ -47,5 +47,8 @@
     "moduleFileExtensions": [
       "js"
     ]
+  },
+  "dependencies": {
+    "lodash": "^3.7.0"
   }
 }

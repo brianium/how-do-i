@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", app.run(function (token) {
   dom.first(".content-authorized").classList.remove("hidden");
 
   var listener = app.onResult.bind(null, token);
-  speech.listen(speech.stream(), "result", speech.confident(listener, 90));
+  speech.listen(speech.stream(), "result", speech.confident(listener));
 }));
 
 },{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){

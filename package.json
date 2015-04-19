@@ -1,20 +1,20 @@
 {
-  "name": "es6-boilerplate",
+  "name": "how-do-i",
   "version": "0.0.0",
-  "description": "boilerplate for starting es6 projects",
+  "description": "ask the computer to teach you things!",
   "main": "index.js",
   "scripts": {
     "test": "jest",
     "build": "gulp",
-    "dev": "gulp dev"
+    "start": "gulp dev"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:brianium/es6-boilerplate.git"
   },
   "keywords": [
-    "auth",
-    "sports"
+    "speech recognition",
+    "youtube"
   ],
   "author": "Brian Scaturro <scaturrob@gmail.com>",
   "license": "MIT",

@@ -20,10 +20,26 @@ var REDIRECT_URI = "http://localhost:8000";
 var startSpeech = _.flow(speech.create, speech.streamable, _.partialRight(speech.listen, "result", console.log.bind(console)), speech.start);
 
 /**
+ * Conditionally invoke a function
+ *
+ * @param {Boolean} bool
+ * @param {Function} func
+ */
+var invokeIf = function invokeIf(bool, func /** arguments */) {
+  if (bool) {
+    return func.apply(null, Array.prototype.slice.call(arguments, 2));
+  }
+};
+
+var authorized = function authorized(token) {
+  alert(token);
+};
+
+/**
  * Run the application
  */
 var run = _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
-  return alert(token);
+  return invokeIf(!!token, authorized, token);
 });
 
 document.addEventListener("DOMContentLoaded", run);

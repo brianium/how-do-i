@@ -20,421 +20,7 @@ document.addEventListener("DOMContentLoaded", app.run(function (token) {
   }).then(document.body.appendChild.bind(document.body));
 }));
 
-},{"./app":2,"./dom":5,"./youtube":9}],2:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var auth = _interopRequire(require("./auth"));
-
-var dom = _interopRequire(require("./dom"));
-
-var fn = _interopRequire(require("./functions"));
-
-var _ = _interopRequire(require("lodash"));
-
-var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
-var REDIRECT_URI = "http://localhost:8000";
-
-module.exports = {
-
-  /**
-   * Return an application running function. The passed in
-   * function is invoked with a token if found.
-   *
-   * @param {Function} authorized
-   * @return {Function}
-   */
-  run: function run(authorized) {
-    return _.flow(function () {
-      return auth.link(CLIENT_ID, REDIRECT_URI);
-    }, function (link) {
-      return document.getElementById("login-link").href = link;
-    }, auth.token, function (token) {
-      return fn.invokeIf(!!token, authorized, token);
-    });
-  }
-};
-
-},{"./auth":4,"./dom":5,"./functions":6,"lodash":11}],3:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var _ = _interopRequire(require("lodash"));
-
-module.exports = {
-  /**
-   * Return a function with a pre applied start point for slicing
-   * an array
-   *
-   * @param {Number} start
-   * @return {Function}
-   */
-  slicer: function slicer(start) {
-    return function (array) {
-      return array.slice(start);
-    };
-  },
-
-  /**
-   * Returns a chunk function for grouping
-   *
-   * @param {Number} chunk size
-   * @return {Function}
-   */
-  chunk: function chunk(size) {
-    return function (array) {
-      return _.chunk(array, size);
-    };
-  }
-};
-
-},{"lodash":11}],4:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var _ = _interopRequire(require("lodash"));
-
-var arr = _interopRequire(require("../array"));
-
-var obj = _interopRequire(require("../object"));
-
-var maybe = require("../monad/maybe").maybe;
-
-var Cookies = _interopRequire(require("cookies-js"));
-
-var TOKEN_PATTERN = /#?(access_token)=([^&]+)&(token_type)=([\w]+)&(expires_in)=([\d]+)/;
-
-/**
- * Append a a querystring parameter
- *
- * @param {String} queryString
- * @param {String} value
- * @param {String} param
- * @return {String}
- */
-function appendParam(queryString, value, param) {
-  return queryString + ("" + param + "=" + encodeURIComponent(value) + "&");
-}
-
-/**
- * Converts a fragment matched against TOKEN_PATTERN
- * into a JWT object
- *
- * @param {Array} matches
- * @return {Object}
- */
-var matchToJWT = _.flow(arr.slicer(1), arr.chunk(2), _.zipObject, obj.keySetter("expires_in", parseInt));
-
-var auth = {
-
-  /**
-   * Get the login link
-   *
-   * @param {String} clientID
-   * @param {String} redirectUri
-   * @return {String}
-   */
-  link: function link(clientId, redirectUri) {
-    var query = {
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: "https://www.googleapis.com/auth/youtube",
-      response_type: "token"
-    };
-    var root = "https://accounts.google.com/o/oauth2/auth?";
-    return root + _.reduce(query, appendParam, "").slice(0, -1);
-  },
-
-  /**
-   * Get a token from a hash fragment
-   *
-   * @param {String} fragment
-   * @return {Object}
-   */
-  parse: function parse(fragment) {
-    var result = TOKEN_PATTERN.exec(fragment);
-    return maybe(result, !!!result).bind(matchToJWT).map(function (jwt) {
-      return jwt;
-    });
-  }
-
-};
-
-/**
- * Get an auth token from a fragment or a cookie
- *
- * @return {String}
- */
-auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token) {
-  return maybe(token, !!!token).map(function (jwt) {
-    return Cookies.set("access_token", jwt.access_token, {
-      expires: jwt.expires_in
-    });
-  });
-}, function () {
-  return Cookies.get("access_token");
-});
-
-module.exports = auth;
-
-},{"../array":3,"../monad/maybe":7,"../object":8,"cookies-js":10,"lodash":11}],5:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var _ = _interopRequire(require("lodash"));
-
-module.exports = {
-  /**
-   * Create an element appender function
-   *
-   * @param {HTMLElement} parent
-   * @param {HTMLElement} child
-   * @return {Function}
-   */
-  appender: function appender(parent, child) {
-    return function () {
-      parent.appendChild(child);
-    };
-  },
-
-  /**
-   * Apply attributes to an element
-   *
-   * @param {HTMLElement} element
-   * @param {Object} attrs
-   * @return {HTMLElement}
-   */
-  attrs: (function (_attrs) {
-    var _attrsWrapper = function attrs(_x, _x2) {
-      return _attrs.apply(this, arguments);
-    };
-
-    _attrsWrapper.toString = function () {
-      return _attrs.toString();
-    };
-
-    return _attrsWrapper;
-  })(function (element, attrs) {
-    if (attrs) {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = Object.keys(attrs)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var k = _step.value;
-
-          element[k] = attrs[k];
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"]) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-    }
-    return element;
-  }),
-
-  /**
-   * Add a text node to the element
-   *
-   * @param {HTMLElement} element
-   * @param {String} text
-   * @return {HTMLElement}
-   */
-  text: (function (_text) {
-    var _textWrapper = function text(_x, _x2) {
-      return _text.apply(this, arguments);
-    };
-
-    _textWrapper.toString = function () {
-      return _text.toString();
-    };
-
-    return _textWrapper;
-  })(function (element, text) {
-    if (text) {
-      element.appendChild(document.createTextNode(text));
-    }
-    return element;
-  }),
-
-  /**
-   * Create an html element
-   *
-   * @param {String} tag
-   * @param {Object} attrs
-   * @param {String} text
-   * @return {HTMLElement}
-   */
-  createElement: function createElement(tag, attrs, text) {
-    return _.flow(_.partialRight(this.attrs, attrs), _.partialRight(this.text, text))(document.createElement(tag));
-  }
-};
-
-},{"lodash":11}],6:[function(require,module,exports){
-"use strict";
-
-module.exports = {
-  /**
-   * Conditionally invoke a function
-   *
-   * @param {Boolean} bool
-   * @param {Function} func
-   */
-  invokeIf: function invokeIf(bool, func /** arguments */) {
-    if (!!bool) {
-      return func.apply(null, Array.prototype.slice.call(arguments, 2));
-    }
-  }
-};
-
-},{}],7:[function(require,module,exports){
-
-
-/**
- * Create a new maybe monad
- *
- * @return {Object}
- */
-"use strict";
-
-exports.maybe = maybe;
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-/**
- * Bind a function to the maybe monad
- *
- * @param {Object} monad
- * @param {Function} transform
- * @return {Object}
- */
-function bind(monad, transform) {
-  if (monad.isEmpty) {
-    return NOTHING;
-  }
-  var result = transform(monad.value);
-  return maybe(result, !!!result);
-}
-
-/**
- * Map a non empty monad into a value
- *
- * @param {Function} fn
- */
-function map(monad, fn) {
-  if (!monad.isEmpty) {
-    return fn(monad.value);
-  }
-  return undefined;
-}
-function maybe(value, isEmpty) {
-  var monad = {
-    value: value,
-    isEmpty: isEmpty
-  };
-  monad.bind = bind.bind(null, monad);
-  monad.map = map.bind(null, monad);
-  return monad;
-}
-
-;
-
-var NOTHING = maybe(null, true);
-exports.NOTHING = NOTHING;
-
-},{}],8:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var _ = _interopRequire(require("lodash"));
-
-module.exports = {
-
-  /**
-   * Return a function that applies a function
-   * to an object's key.
-   *
-   * @param {Object} object
-   * @param {String} key
-   * @param {Function} fn
-   * @return {Function}
-   */
-  keySetter: function keySetter(key, fn) {
-    return function (object) {
-      var obj = _.clone(object);
-      obj[key] = fn(object[key]);
-      return obj;
-    };
-  }
-};
-
-},{"lodash":11}],9:[function(require,module,exports){
-"use strict";
-
-module.exports = {
-  /**
-   * Return a uri for making a youtube query
-   *
-   * @param {String} token
-   * @param {String} query
-   * @return {String}
-   */
-  uri: function uri(token, query) {
-    return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
-  },
-
-  /**
-   * Return a promise with the JSON result of a youtube query
-   *
-   * @param {String} token
-   * @param {String} query
-   * @return {Promise}
-   */
-  query: (function (_query) {
-    var _queryWrapper = function query(_x, _x2) {
-      return _query.apply(this, arguments);
-    };
-
-    _queryWrapper.toString = function () {
-      return _query.toString();
-    };
-
-    return _queryWrapper;
-  })(function (token, query) {
-    return fetch(this.uri(token, query)).then(function (resp) {
-      return resp.text();
-    }).then(JSON.parse);
-  }),
-
-  /**
-   * Return a video url used for embedding a
-   * video from youtube.
-   *
-   * @param {Object} video
-   * @return {String}
-   */
-  videoUrl: function videoUrl(video) {
-    return "http://www.youtube.com/v/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
-  }
-};
-
-},{}],10:[function(require,module,exports){
+},{"./app":4,"./dom":7,"./youtube":11}],2:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -596,7 +182,7 @@ module.exports = {
         global.Cookies = cookiesExport;
     }
 })(typeof window === 'undefined' ? this : window);
-},{}],11:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -12766,4 +12352,418 @@ module.exports = {
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],4:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var auth = _interopRequire(require("./auth"));
+
+var dom = _interopRequire(require("./dom"));
+
+var fn = _interopRequire(require("./functions"));
+
+var _ = _interopRequire(require("lodash"));
+
+var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
+var REDIRECT_URI = "http://localhost:8000";
+
+module.exports = {
+
+  /**
+   * Return an application running function. The passed in
+   * function is invoked with a token if found.
+   *
+   * @param {Function} authorized
+   * @return {Function}
+   */
+  run: function run(authorized) {
+    return _.flow(function () {
+      return auth.link(CLIENT_ID, REDIRECT_URI);
+    }, function (link) {
+      return document.getElementById("login-link").href = link;
+    }, auth.token, function (token) {
+      return fn.invokeIf(!!token, authorized, token);
+    });
+  }
+};
+
+},{"./auth":6,"./dom":7,"./functions":8,"lodash":3}],5:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _ = _interopRequire(require("lodash"));
+
+module.exports = {
+  /**
+   * Return a function with a pre applied start point for slicing
+   * an array
+   *
+   * @param {Number} start
+   * @return {Function}
+   */
+  slicer: function slicer(start) {
+    return function (array) {
+      return array.slice(start);
+    };
+  },
+
+  /**
+   * Returns a chunk function for grouping
+   *
+   * @param {Number} chunk size
+   * @return {Function}
+   */
+  chunk: function chunk(size) {
+    return function (array) {
+      return _.chunk(array, size);
+    };
+  }
+};
+
+},{"lodash":3}],6:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _ = _interopRequire(require("lodash"));
+
+var arr = _interopRequire(require("../array"));
+
+var obj = _interopRequire(require("../object"));
+
+var maybe = require("../monad/maybe").maybe;
+
+var Cookies = _interopRequire(require("cookies-js"));
+
+var TOKEN_PATTERN = /#?(access_token)=([^&]+)&(token_type)=([\w]+)&(expires_in)=([\d]+)/;
+
+/**
+ * Append a a querystring parameter
+ *
+ * @param {String} queryString
+ * @param {String} value
+ * @param {String} param
+ * @return {String}
+ */
+function appendParam(queryString, value, param) {
+  return queryString + ("" + param + "=" + encodeURIComponent(value) + "&");
+}
+
+/**
+ * Converts a fragment matched against TOKEN_PATTERN
+ * into a JWT object
+ *
+ * @param {Array} matches
+ * @return {Object}
+ */
+var matchToJWT = _.flow(arr.slicer(1), arr.chunk(2), _.zipObject, obj.keySetter("expires_in", parseInt));
+
+var auth = {
+
+  /**
+   * Get the login link
+   *
+   * @param {String} clientID
+   * @param {String} redirectUri
+   * @return {String}
+   */
+  link: function link(clientId, redirectUri) {
+    var query = {
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "https://www.googleapis.com/auth/youtube",
+      response_type: "token"
+    };
+    var root = "https://accounts.google.com/o/oauth2/auth?";
+    return root + _.reduce(query, appendParam, "").slice(0, -1);
+  },
+
+  /**
+   * Get a token from a hash fragment
+   *
+   * @param {String} fragment
+   * @return {Object}
+   */
+  parse: function parse(fragment) {
+    var result = TOKEN_PATTERN.exec(fragment);
+    return maybe(result, !!!result).bind(matchToJWT).map(function (jwt) {
+      return jwt;
+    });
+  }
+
+};
+
+/**
+ * Get an auth token from a fragment or a cookie
+ *
+ * @return {String}
+ */
+auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token) {
+  return maybe(token, !!!token).map(function (jwt) {
+    return Cookies.set("access_token", jwt.access_token, {
+      expires: jwt.expires_in
+    });
+  });
+}, function () {
+  return Cookies.get("access_token");
+});
+
+module.exports = auth;
+
+},{"../array":5,"../monad/maybe":9,"../object":10,"cookies-js":2,"lodash":3}],7:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _ = _interopRequire(require("lodash"));
+
+module.exports = {
+  /**
+   * Create an element appender function
+   *
+   * @param {HTMLElement} parent
+   * @param {HTMLElement} child
+   * @return {Function}
+   */
+  appender: function appender(parent, child) {
+    return function () {
+      parent.appendChild(child);
+    };
+  },
+
+  /**
+   * Apply attributes to an element
+   *
+   * @param {HTMLElement} element
+   * @param {Object} attrs
+   * @return {HTMLElement}
+   */
+  attrs: (function (_attrs) {
+    var _attrsWrapper = function attrs(_x, _x2) {
+      return _attrs.apply(this, arguments);
+    };
+
+    _attrsWrapper.toString = function () {
+      return _attrs.toString();
+    };
+
+    return _attrsWrapper;
+  })(function (element, attrs) {
+    if (attrs) {
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = Object.keys(attrs)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var k = _step.value;
+
+          element[k] = attrs[k];
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator["return"]) {
+            _iterator["return"]();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
+    return element;
+  }),
+
+  /**
+   * Add a text node to the element
+   *
+   * @param {HTMLElement} element
+   * @param {String} text
+   * @return {HTMLElement}
+   */
+  text: (function (_text) {
+    var _textWrapper = function text(_x, _x2) {
+      return _text.apply(this, arguments);
+    };
+
+    _textWrapper.toString = function () {
+      return _text.toString();
+    };
+
+    return _textWrapper;
+  })(function (element, text) {
+    if (text) {
+      element.appendChild(document.createTextNode(text));
+    }
+    return element;
+  }),
+
+  /**
+   * Create an html element
+   *
+   * @param {String} tag
+   * @param {Object} attrs
+   * @param {String} text
+   * @return {HTMLElement}
+   */
+  createElement: function createElement(tag, attrs, text) {
+    return _.flow(_.partialRight(this.attrs, attrs), _.partialRight(this.text, text))(document.createElement(tag));
+  }
+};
+
+},{"lodash":3}],8:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  /**
+   * Conditionally invoke a function
+   *
+   * @param {Boolean} bool
+   * @param {Function} func
+   */
+  invokeIf: function invokeIf(bool, func /** arguments */) {
+    if (!!bool) {
+      return func.apply(null, Array.prototype.slice.call(arguments, 2));
+    }
+  }
+};
+
+},{}],9:[function(require,module,exports){
+
+
+/**
+ * Create a new maybe monad
+ *
+ * @return {Object}
+ */
+"use strict";
+
+exports.maybe = maybe;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/**
+ * Bind a function to the maybe monad
+ *
+ * @param {Object} monad
+ * @param {Function} transform
+ * @return {Object}
+ */
+function bind(monad, transform) {
+  if (monad.isEmpty) {
+    return NOTHING;
+  }
+  var result = transform(monad.value);
+  return maybe(result, !!!result);
+}
+
+/**
+ * Map a non empty monad into a value
+ *
+ * @param {Function} fn
+ */
+function map(monad, fn) {
+  if (!monad.isEmpty) {
+    return fn(monad.value);
+  }
+  return undefined;
+}
+function maybe(value, isEmpty) {
+  var monad = {
+    value: value,
+    isEmpty: isEmpty
+  };
+  monad.bind = bind.bind(null, monad);
+  monad.map = map.bind(null, monad);
+  return monad;
+}
+
+;
+
+var NOTHING = maybe(null, true);
+exports.NOTHING = NOTHING;
+
+},{}],10:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _ = _interopRequire(require("lodash"));
+
+module.exports = {
+
+  /**
+   * Return a function that applies a function
+   * to an object's key.
+   *
+   * @param {Object} object
+   * @param {String} key
+   * @param {Function} fn
+   * @return {Function}
+   */
+  keySetter: function keySetter(key, fn) {
+    return function (object) {
+      var obj = _.clone(object);
+      obj[key] = fn(object[key]);
+      return obj;
+    };
+  }
+};
+
+},{"lodash":3}],11:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  /**
+   * Return a uri for making a youtube query
+   *
+   * @param {String} token
+   * @param {String} query
+   * @return {String}
+   */
+  uri: function uri(token, query) {
+    return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
+  },
+
+  /**
+   * Return a promise with the JSON result of a youtube query
+   *
+   * @param {String} token
+   * @param {String} query
+   * @return {Promise}
+   */
+  query: (function (_query) {
+    var _queryWrapper = function query(_x, _x2) {
+      return _query.apply(this, arguments);
+    };
+
+    _queryWrapper.toString = function () {
+      return _query.toString();
+    };
+
+    return _queryWrapper;
+  })(function (token, query) {
+    return fetch(this.uri(token, query)).then(function (resp) {
+      return resp.text();
+    }).then(JSON.parse);
+  }),
+
+  /**
+   * Return a video url used for embedding a
+   * video from youtube.
+   *
+   * @param {Object} video
+   * @return {String}
+   */
+  videoUrl: function videoUrl(video) {
+    return "http://www.youtube.com/v/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
+  }
+};
+
 },{}]},{},[1]);

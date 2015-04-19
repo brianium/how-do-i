@@ -16,7 +16,7 @@ function stripDirectory(path) {
   path.dirname = '';
 }
 
-gulp.task('browserify', function() {
+gulp.task('browserify', ['clean'], function() {
   return browserify('./' + config.main)
       .transform(babelify)
       .bundle()

@@ -1,8 +1,10 @@
 'use strict';
 
-var lib = 'lib';
+var lib = 'src/scripts';
+var src = 'src';
 
 module.exports = {
+  src: src,
   lib: lib,
   main: lib + '/main.js',
   dist: 'dist',
@@ -10,5 +12,15 @@ module.exports = {
     paths: ['js'].reduce(function(paths, ext) {
       return paths.concat([lib + '/**/*.' + ext, lib + '/*.' + ext]);
     }, [])
+  },
+  inject: {
+    addRootSlash: true,
+    relative: true
+  },
+  browserSync: {
+    server: {
+      baseDir: 'dist',
+      index: 'index.html'
+    }
   }
 };

@@ -30,4 +30,13 @@ describe('dom', function () {
     expect(div.tagName).toBe('DIV');
     expect(div.id).toBe('hello');
   });
+
+  it('can find a single element', function () {
+    let div = d.createElement('div', {id:'test-div'});
+    document.body.appendChild(div);
+
+    let test = d.first('#test-div');
+
+    expect(test.id).toBe('test-div');
+  });
 });

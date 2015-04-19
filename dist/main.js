@@ -46,7 +46,11 @@ module.exports = {
    * @return {Function}
    */
   run: function run(authorized) {
-    return _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
+    return _.flow(function () {
+      return auth.link(CLIENT_ID, REDIRECT_URI);
+    }, function (link) {
+      return document.getElementById("login-link").href = link;
+    }, auth.token, function (token) {
       return fn.invokeIf(!!token, authorized, token);
     });
   }

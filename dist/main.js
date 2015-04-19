@@ -3,7 +3,19 @@
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var speech = _interopRequire(require("./speech"));
+var app = _interopRequire(require("./app"));
+
+/**
+ * Run the application as soon as dom content has loaded
+ */
+document.addEventListener("DOMContentLoaded", app.run(function (token) {
+  return alert(token);
+}));
+
+},{"./app":2}],2:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var auth = _interopRequire(require("./auth"));
 
@@ -16,30 +28,15 @@ var _ = _interopRequire(require("lodash"));
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
 
-/**
- * Start the speech recognition
- */
-var startSpeech = _.flow(speech.create, speech.streamable, _.partialRight(speech.listen, "result", console.log.bind(console)), speech.start);
-
-/**
- * This function is invoked when an access_token is returned.
- *
- * @param {String} token
- */
-var authorized = function authorized(token) {
-  alert(token);
+module.exports = {
+  run: function run(authorized /** arguments */) {
+    return _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
+      return fn.invokeIf(!!token, authorized, token);
+    });
+  }
 };
 
-/**
- * Run the application
- */
-var run = _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
-  return fn.invokeIf(!!token, authorized, token);
-});
-
-document.addEventListener("DOMContentLoaded", run);
-
-},{"./auth":3,"./dom":4,"./functions":5,"./speech":8,"lodash":10}],2:[function(require,module,exports){
+},{"./auth":4,"./dom":5,"./functions":6,"lodash":10}],3:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -73,7 +70,7 @@ module.exports = {
   }
 };
 
-},{"lodash":10}],3:[function(require,module,exports){
+},{"lodash":10}],4:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -163,7 +160,7 @@ auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token
 
 module.exports = auth;
 
-},{"../array":2,"../monad/maybe":6,"../object":7,"cookies-js":9,"lodash":10}],4:[function(require,module,exports){
+},{"../array":3,"../monad/maybe":7,"../object":8,"cookies-js":9,"lodash":10}],5:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -220,7 +217,7 @@ module.exports = {
   }
 };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -237,7 +234,7 @@ module.exports = {
   }
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 
 /**
@@ -292,7 +289,7 @@ function maybe(value, isEmpty) {
 var NOTHING = maybe(null, true);
 exports.NOTHING = NOTHING;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -319,55 +316,7 @@ module.exports = {
   }
 };
 
-},{"lodash":10}],8:[function(require,module,exports){
-"use strict";
-
-module.exports = {
-
-  /**
-   * @return {SpeechRecognition}
-   */
-  create: function create() {
-    return new webkitSpeechRecognition();
-  },
-
-  /**
-   * Make a SpeechRecognition object streamable
-   *
-   * @param {SpeechRecognition} speech
-   * @return {SpeechRecognition}
-   */
-  streamable: function streamable(speech) {
-    speech.continuous = true;
-    speech.interimResults = true;
-    return speech;
-  },
-
-  /**
-   * Start listening for speech
-   *
-   * @param {SpeechRecognition} speech
-   */
-  start: function start(speech) {
-    speech.start();
-  },
-
-  /**
-   * Listen for a speech event
-   *
-   * @param {SpeechRecognition} speech
-   * @param {String} event
-   * @param {Function} listener
-   * @return {SpeechRecognition}
-   */
-  listen: function listen(speech, event, listener) {
-    speech["on" + event] = listener;
-    return speech;
-  }
-
-};
-
-},{}],9:[function(require,module,exports){
+},{"lodash":10}],9:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies

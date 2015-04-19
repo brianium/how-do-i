@@ -9,7 +9,11 @@ var app = _interopRequire(require("./app"));
  * Run the application as soon as dom content has loaded
  */
 document.addEventListener("DOMContentLoaded", app.run(function (token) {
-  return alert(token);
+  fetch("https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=hello", { mode: "cors" }).then(function (resp) {
+    return resp.text();
+  }).then(JSON.parse).then(function (result) {
+    return console.log(result);
+  });
 }));
 
 },{"./app":2}],2:[function(require,module,exports){

@@ -29,7 +29,15 @@ var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleuserco
 var REDIRECT_URI = "http://localhost:8000";
 
 module.exports = {
-  run: function run(authorized /** arguments */) {
+
+  /**
+   * Return an application running function. The passed in
+   * function is invoked with a token if found.
+   *
+   * @param {Function} authorized
+   * @return {Function}
+   */
+  run: function run(authorized) {
     return _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
       return fn.invokeIf(!!token, authorized, token);
     });

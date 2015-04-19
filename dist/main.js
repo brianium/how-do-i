@@ -9,6 +9,8 @@ var auth = _interopRequire(require("./auth"));
 
 var dom = _interopRequire(require("./dom"));
 
+var fn = _interopRequire(require("./functions"));
+
 var _ = _interopRequire(require("lodash"));
 
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
@@ -20,17 +22,10 @@ var REDIRECT_URI = "http://localhost:8000";
 var startSpeech = _.flow(speech.create, speech.streamable, _.partialRight(speech.listen, "result", console.log.bind(console)), speech.start);
 
 /**
- * Conditionally invoke a function
+ * This function is invoked when an access_token is returned.
  *
- * @param {Boolean} bool
- * @param {Function} func
+ * @param {String} token
  */
-var invokeIf = function invokeIf(bool, func /** arguments */) {
-  if (bool) {
-    return func.apply(null, Array.prototype.slice.call(arguments, 2));
-  }
-};
-
 var authorized = function authorized(token) {
   alert(token);
 };
@@ -39,12 +34,12 @@ var authorized = function authorized(token) {
  * Run the application
  */
 var run = _.flow(dom.appender(document.body, dom.createElement("a", { href: auth.link(CLIENT_ID, REDIRECT_URI) }, "Login")), auth.token, function (token) {
-  return invokeIf(!!token, authorized, token);
+  return fn.invokeIf(!!token, authorized, token);
 });
 
 document.addEventListener("DOMContentLoaded", run);
 
-},{"./auth":3,"./dom":4,"./speech":7,"lodash":9}],2:[function(require,module,exports){
+},{"./auth":3,"./dom":4,"./functions":5,"./speech":8,"lodash":10}],2:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -78,7 +73,7 @@ module.exports = {
   }
 };
 
-},{"lodash":9}],3:[function(require,module,exports){
+},{"lodash":10}],3:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -168,7 +163,7 @@ auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token
 
 module.exports = auth;
 
-},{"../array":2,"../monad/maybe":5,"../object":6,"cookies-js":8,"lodash":9}],4:[function(require,module,exports){
+},{"../array":2,"../monad/maybe":6,"../object":7,"cookies-js":9,"lodash":10}],4:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -226,6 +221,23 @@ module.exports = {
 };
 
 },{}],5:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  /**
+   * Conditionally invoke a function
+   *
+   * @param {Boolean} bool
+   * @param {Function} func
+   */
+  invokeIf: function invokeIf(bool, func /** arguments */) {
+    if (!!bool) {
+      return func.apply(null, Array.prototype.slice.call(arguments, 2));
+    }
+  }
+};
+
+},{}],6:[function(require,module,exports){
 
 
 /**
@@ -280,7 +292,7 @@ function maybe(value, isEmpty) {
 var NOTHING = maybe(null, true);
 exports.NOTHING = NOTHING;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -307,7 +319,7 @@ module.exports = {
   }
 };
 
-},{"lodash":9}],7:[function(require,module,exports){
+},{"lodash":10}],8:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -355,7 +367,7 @@ module.exports = {
 
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -517,7 +529,7 @@ module.exports = {
         global.Cookies = cookiesExport;
     }
 })(typeof window === 'undefined' ? this : window);
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (global){
 /**
  * @license

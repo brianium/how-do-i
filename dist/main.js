@@ -13,6 +13,7 @@ var dom = _interopRequire(require("./dom"));
  * Run the application as soon as dom content has loaded
  */
 document.addEventListener("DOMContentLoaded", app.run(function (token) {
+  document.getElementById("login-link").classList.add("hidden");
   yt.query(token, "hello").then(function (result) {
     return result.items[0];
   }).then(function (item) {

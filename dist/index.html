@@ -7,10 +7,22 @@
   .hidden {
     display:none;
   }
+
+  .recognized {
+    font-weight:bold;
+    font-size: 28px;
+  }
   </style>
 </head>
 <body>
-  <a href="#" id="login-link">Login</a>
+  <div class="content content-unauthorized">
+    <a href="#" id="login-link">Login</a>
+  </div>
+  <div class="content content-authorized hidden">
+    <iframe id="video" src="" frameborder="0" width="640" height="360">
+      
+    </iframe>
+  </div>
   <!-- inject:js -->
   <script src="/main.js"></script>
   <!-- endinject -->

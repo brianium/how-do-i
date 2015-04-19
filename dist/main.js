@@ -5,23 +5,22 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var app = _interopRequire(require("./app"));
 
-var yt = _interopRequire(require("./youtube"));
-
 var dom = _interopRequire(require("./dom"));
+
+var speech = _interopRequire(require("./speech"));
 
 /**
  * Run the application as soon as dom content has loaded
  */
 document.addEventListener("DOMContentLoaded", app.run(function (token) {
-  document.getElementById("login-link").classList.add("hidden");
-  yt.query(token, "hello").then(function (result) {
-    return result.items[0];
-  }).then(function (item) {
-    return dom.createElement("iframe", { width: 640, height: 360, src: yt.videoUrl(item) });
-  }).then(document.body.appendChild.bind(document.body));
+  dom.first(".content-unauthorized").classList.add("hidden");
+  dom.first(".content-authorized").classList.remove("hidden");
+
+  var listener = app.onResult.bind(null, token);
+  speech.listen(speech.stream(), "result", speech.confident(listener, 90));
 }));
 
-},{"./app":4,"./dom":7,"./youtube":11}],2:[function(require,module,exports){
+},{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -12364,10 +12363,15 @@ var dom = _interopRequire(require("./dom"));
 
 var fn = _interopRequire(require("./functions"));
 
+var speech = _interopRequire(require("./speech"));
+
+var yt = _interopRequire(require("./youtube"));
+
 var _ = _interopRequire(require("lodash"));
 
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
+var VIDEO_SEARCH = /how[\s]do[\s]i/i;
 
 module.exports = {
 
@@ -12386,10 +12390,30 @@ module.exports = {
     }, auth.token, function (token) {
       return fn.invokeIf(!!token, authorized, token);
     });
+  },
+
+  /**
+   * A listener for search terms
+   *
+   * @param {String} token
+   * @param {Object} result
+   * @param {Event} event
+   */
+  onResult: function onResult(token, result, event) {
+    if (VIDEO_SEARCH.test(result.transcript)) {
+      var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
+      yt.query(token, "how to " + term).then(function (result) {
+        return result.items[0];
+      }).then(function (video) {
+        return dom.first("#video").src = yt.videoUrl(video);
+      }).then(function () {
+        return speech.stop(event.target);
+      });
+    }
   }
 };
 
-},{"./auth":6,"./dom":7,"./functions":8,"lodash":3}],5:[function(require,module,exports){
+},{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"./youtube":12,"lodash":3}],5:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -12521,6 +12545,15 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 var _ = _interopRequire(require("lodash"));
 
 module.exports = {
+
+  /**
+   * Get the first element matching the selector
+   */
+  first: function first(selector) {
+    var list = document.querySelectorAll(selector);
+    return list.length > 0 ? list[0] : undefined;
+  },
+
   /**
    * Create an element appender function
    *
@@ -12718,6 +12751,98 @@ module.exports = {
 };
 
 },{"lodash":3}],11:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _ = _interopRequire(require("lodash"));
+
+var speech = {
+
+  /**
+   * @return {SpeechRecognition}
+   */
+  create: function create() {
+    return new webkitSpeechRecognition();
+  },
+
+  /**
+   * Make a SpeechRecognition object streamable
+   *
+   * @param {SpeechRecognition} speech
+   * @return {SpeechRecognition}
+   */
+  streamable: function streamable(speech) {
+    speech.continuous = true;
+    speech.interimResults = true;
+    return speech;
+  },
+
+  /**
+   * Start listening for speech
+   *
+   * @param {SpeechRecognition} speech
+   * @return {SpeechRecognition}
+   */
+  start: function start(speech) {
+    speech.start();
+    return speech;
+  },
+
+  /**
+   * Stop listening for speech
+   *
+   * @param {SpeechRecognition} speech
+   */
+  stop: function stop(speech) {
+    speech.stop();
+  },
+
+  /**
+   * Listen for a speech event
+   *
+   * @param {SpeechRecognition} speech
+   * @param {String} event
+   * @param {Function} listener
+   * @return {SpeechRecognition}
+   */
+  listen: function listen(speech, event, listener) {
+    speech["on" + event] = listener;
+    return speech;
+  },
+
+  /**
+   * Returns a confident listener. The listener
+   * will only execute if the level of confidence is reached.
+   *
+   * @param {Function} listener
+   * @param {Number} level
+   * @return {Function}
+   */
+  confident: function confident(listener, level) {
+    level || (level = 80);
+    return function (event) {
+      var results = event.results;
+      var result = results[results.length - 1][0];
+      var confidence = result.confidence * 100;
+      if (confidence > level) {
+        listener(result, event);
+      }
+    };
+  }
+
+};
+
+/**
+ * Start streaming speech recognition
+ *
+ * @return {SpeechRecognition}
+ */
+speech.stream = _.flow(speech.create, speech.streamable, speech.start);
+
+module.exports = speech;
+
+},{"lodash":3}],12:[function(require,module,exports){
 "use strict";
 
 module.exports = {

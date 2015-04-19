@@ -1,6 +1,15 @@
 import _ from 'lodash';
 
 export default {
+
+  /**
+   * Get the first element matching the selector
+   */
+  first(selector) {
+    let list = document.querySelectorAll(selector);
+    return list.length > 0 ? list[0] : undefined;
+  },
+
   /**
    * Create an element appender function
    *

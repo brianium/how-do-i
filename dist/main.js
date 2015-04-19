@@ -5,13 +5,13 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var app = _interopRequire(require("./app"));
 
+var yt = _interopRequire(require("./youtube"));
+
 /**
  * Run the application as soon as dom content has loaded
  */
 document.addEventListener("DOMContentLoaded", app.run(function (token) {
-  fetch("https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=hello&type=video&videoEmbeddable=true", { mode: "cors" }).then(function (resp) {
-    return resp.text();
-  }).then(JSON.parse).then(function (result) {
+  yt.query(token, "hello").then(function (result) {
     var item = result.items[0];
 
     var iframe = document.createElement("iframe");
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", app.run(function (token) {
   });
 }));
 
-},{"./app":2}],2:[function(require,module,exports){
+},{"./app":2,"./youtube":9}],2:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -55,7 +55,7 @@ module.exports = {
   }
 };
 
-},{"./auth":4,"./dom":5,"./functions":6,"lodash":10}],3:[function(require,module,exports){
+},{"./auth":4,"./dom":5,"./functions":6,"lodash":11}],3:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -89,7 +89,7 @@ module.exports = {
   }
 };
 
-},{"lodash":10}],4:[function(require,module,exports){
+},{"lodash":11}],4:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -179,7 +179,7 @@ auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token
 
 module.exports = auth;
 
-},{"../array":3,"../monad/maybe":7,"../object":8,"cookies-js":9,"lodash":10}],5:[function(require,module,exports){
+},{"../array":3,"../monad/maybe":7,"../object":8,"cookies-js":10,"lodash":11}],5:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -335,7 +335,46 @@ module.exports = {
   }
 };
 
-},{"lodash":10}],9:[function(require,module,exports){
+},{"lodash":11}],9:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  /**
+   * Return a uri for making a youtube query
+   *
+   * @param {String} token
+   * @param {String} query
+   * @return {String}
+   */
+  uri: function uri(token, query) {
+    return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
+  },
+
+  /**
+   * Return a promise with the JSON result of a youtube query
+   *
+   * @param {String} token
+   * @param {String} query
+   * @return {Promise}
+   */
+  query: (function (_query) {
+    var _queryWrapper = function query(_x, _x2) {
+      return _query.apply(this, arguments);
+    };
+
+    _queryWrapper.toString = function () {
+      return _query.toString();
+    };
+
+    return _queryWrapper;
+  })(function (token, query) {
+    return fetch(this.uri(token, query)).then(function (resp) {
+      return resp.text();
+    }).then(JSON.parse);
+  })
+};
+
+},{}],10:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -497,7 +536,7 @@ module.exports = {
         global.Cookies = cookiesExport;
     }
 })(typeof window === 'undefined' ? this : window);
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (global){
 /**
  * @license

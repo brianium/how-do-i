@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import arr from '../array';
+import {slicer, chunker} from '../array';
 import obj from '../object';
 import {maybe} from '../monad/maybe';
 import Cookies from 'cookies-js';
@@ -26,8 +26,8 @@ function appendParam(queryString, value, param) {
  * @return {Object}
  */
 const matchToJWT = _.flow(
-  arr.slicer(1),
-  arr.chunk(2),
+  slicer(1),
+  chunker(2),
   _.zipObject,
   obj.keySetter('expires_in', parseInt)
 );

@@ -1,8 +1,8 @@
 jest.dontMock('../');
 
-describe('youtube', function () {
-  let yt = require('../');
+import * as yt from '../';
 
+describe('youtube', function () {
   it('can generate a query uri given a token and a query parameter', function () {
     let uri = yt.uri('mytoken', 'hello');
     let expected = 'https://www.googleapis.com/youtube/v3/search?access_token=mytoken&part=id,snippet&q=hello&type=video&videoEmbeddable=true';

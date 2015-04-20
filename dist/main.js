@@ -12596,11 +12596,19 @@ exports.attrs = attrs;
 exports.text = text;
 
 /**
+ * Create an HTMLElement
+ *
+ * @param {String}
+ * @return {HTMLElement}
+ */
+exports.elem = elem;
+
+/**
  * Create an html element
  *
  * @param {String} tag
- * @param {Object} attrs
- * @param {String} text
+ * @param {Object} attributes
+ * @param {String} txt
  * @return {HTMLElement}
  */
 exports.createElement = createElement;
@@ -12661,8 +12669,14 @@ function text(element, text) {
   return element;
 }
 
-function createElement(tag, attrs, text) {
-  return flow(partialRight(this.attrs, attrs), partialRight(this.text, text))(document.createElement(tag));
+function elem(tag) {
+  return document.createElement(tag);
+}
+
+function createElement(tag, attributes, txt) {
+  var setAttrs = partialRight(attrs, attributes);
+  var setText = partialRight(text, txt);
+  return flow(elem, setAttrs, setText)(tag);
 }
 
 },{"lodash":3}],8:[function(require,module,exports){

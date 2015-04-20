@@ -52,16 +52,25 @@ export function text(element, text) {
 }
 
 /**
+ * Create an HTMLElement
+ *
+ * @param {String}
+ * @return {HTMLElement}
+ */
+export function elem(tag) {
+  return document.createElement(tag);
+}
+
+/**
  * Create an html element
  *
  * @param {String} tag
- * @param {Object} attrs
- * @param {String} text
+ * @param {Object} attributes
+ * @param {String} txt
  * @return {HTMLElement}
  */
-export function createElement(tag, attrs, text) {
-  return flow(
-    partialRight(this.attrs, attrs),
-    partialRight(this.text, text)
-  )(document.createElement(tag));
+export function createElement(tag, attributes, txt) {
+  let setAttrs = partialRight(attrs, attributes);
+  let setText = partialRight(text, txt);
+  return flow(elem, setAttrs, setText)(tag);
 }

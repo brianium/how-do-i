@@ -2,9 +2,10 @@ jest.dontMock('../');
 jest.dontMock('lodash');
 jest.dontMock('babelify/polyfill');
 
+import * as d from '../';
+
 describe('dom', function () {
   require("babelify/polyfill");
-  let d = require('../');
 
   it('can create elements', function () {
     let p = d.createElement('p', {id:'para'}, 'hello');

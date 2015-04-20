@@ -34,3 +34,9 @@ The app uses browser-sync in dev. Just issue the following to commence yelling a
 ```
 $ npm start
 ```
+
+## Motivation
+
+I wanted an excuse to apply some functional programming using ES6 features. Wanted to keep things
+to native APIs with the exception of lodash. It also sounded like a lot of fun to ask a browser "how do I bake cookies?", and potentially
+get something useful out of that.

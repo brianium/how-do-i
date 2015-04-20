@@ -1,23 +1,28 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+var _app = require("./app");
 
-var app = _interopRequire(require("./app"));
+var run = _app.run;
+var onResult = _app.onResult;
 
-var dom = _interopRequire(require("./dom"));
+var first = require("./dom").first;
 
-var speech = _interopRequire(require("./speech"));
+var _speech = require("./speech");
+
+var listen = _speech.listen;
+var stream = _speech.stream;
+var confident = _speech.confident;
 
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", app.run(function (token) {
-  dom.first(".content-unauthorized").classList.add("hidden");
-  dom.first(".content-authorized").classList.remove("hidden");
+document.addEventListener("DOMContentLoaded", run(function (token) {
+  first(".content-unauthorized").classList.add("hidden");
+  first(".content-authorized").classList.remove("hidden");
 
-  var listener = app.onResult.bind(null, token);
-  speech.listen(speech.stream(), "result", speech.confident(listener));
+  var listener = onResult.bind(null, token);
+  listen(stream(), "result", confident(listener));
 }));
 
 },{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){
@@ -12357,106 +12362,139 @@ document.addEventListener("DOMContentLoaded", app.run(function (token) {
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var auth = _interopRequire(require("./auth"));
+var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
-var dom = _interopRequire(require("./dom"));
+/**
+ * Return an application running function. The passed in
+ * function is invoked with a token if found.
+ *
+ * @param {Function} authorized
+ * @return {Function}
+ */
+exports.run = run;
 
-var fn = _interopRequire(require("./functions"));
+/**
+ * A listener for search terms
+ *
+ * @param {String} token
+ * @param {Object} result
+ * @param {Event} event
+ */
+exports.onResult = onResult;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var speech = _interopRequire(require("./speech"));
+var auth = _interopRequireWildcard(require("./auth"));
 
-var yt = _interopRequire(require("./youtube"));
+var yt = _interopRequireWildcard(require("./youtube"));
+
+var first = require("./dom").first;
+
+var invokeIf = require("./functions").invokeIf;
+
+var stop = require("./speech").stop;
 
 var _ = _interopRequire(require("lodash"));
 
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
 var VIDEO_SEARCH = /how[\s]do[\s]i/i;
+function run(authorized) {
+  return _.flow(function () {
+    return auth.link(CLIENT_ID, REDIRECT_URI);
+  }, function (link) {
+    return first("#login-link").href = link;
+  }, auth.token, function (token) {
+    return invokeIf(!!token, authorized, token);
+  });
+}
 
-module.exports = {
-
-  /**
-   * Return an application running function. The passed in
-   * function is invoked with a token if found.
-   *
-   * @param {Function} authorized
-   * @return {Function}
-   */
-  run: function run(authorized) {
-    return _.flow(function () {
-      return auth.link(CLIENT_ID, REDIRECT_URI);
-    }, function (link) {
-      return document.getElementById("login-link").href = link;
-    }, auth.token, function (token) {
-      return fn.invokeIf(!!token, authorized, token);
+function onResult(token, result, event) {
+  if (VIDEO_SEARCH.test(result.transcript)) {
+    var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
+    yt.query(token, "how to " + term).then(function (result) {
+      return result.items[0];
+    }).then(function (video) {
+      return first("#video").src = yt.videoUrl(video);
+    }).then(function () {
+      return stop(event.target);
     });
-  },
-
-  /**
-   * A listener for search terms
-   *
-   * @param {String} token
-   * @param {Object} result
-   * @param {Event} event
-   */
-  onResult: function onResult(token, result, event) {
-    if (VIDEO_SEARCH.test(result.transcript)) {
-      var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
-      yt.query(token, "how to " + term).then(function (result) {
-        return result.items[0];
-      }).then(function (video) {
-        return dom.first("#video").src = yt.videoUrl(video);
-      }).then(function () {
-        return speech.stop(event.target);
-      });
-    }
   }
-};
+}
 
 },{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"./youtube":12,"lodash":3}],5:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+/**
+ * Return a function with a pre applied start point for slicing
+ * an array
+ *
+ * @param {Number} start
+ * @return {Function}
+ */
+exports.slicer = slicer;
+
+/**
+ * Returns a chunk function for grouping
+ *
+ * @param {Number} chunk size
+ * @return {Function}
+ */
+exports.chunker = chunker;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _ = _interopRequire(require("lodash"));
 
-module.exports = {
-  /**
-   * Return a function with a pre applied start point for slicing
-   * an array
-   *
-   * @param {Number} start
-   * @return {Function}
-   */
-  slicer: function slicer(start) {
-    return function (array) {
-      return array.slice(start);
-    };
-  },
+function slicer(start) {
+  return function (array) {
+    return array.slice(start);
+  };
+}
 
-  /**
-   * Returns a chunk function for grouping
-   *
-   * @param {Number} chunk size
-   * @return {Function}
-   */
-  chunk: function chunk(size) {
-    return function (array) {
-      return _.chunk(array, size);
-    };
-  }
-};
+function chunker(size) {
+  return function (array) {
+    return _.chunk(array, size);
+  };
+}
 
 },{"lodash":3}],6:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+/**
+ * Get the login link
+ *
+ * @param {String} clientID
+ * @param {String} redirectUri
+ * @return {String}
+ */
+exports.link = link;
+
+/**
+ * Get a token from a hash fragment
+ *
+ * @param {String} fragment
+ * @return {Object}
+ */
+exports.parse = parse;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _ = _interopRequire(require("lodash"));
 
-var arr = _interopRequire(require("../array"));
+var _array = require("../array");
 
-var obj = _interopRequire(require("../object"));
+var slicer = _array.slicer;
+var chunker = _array.chunker;
+
+var keySetter = require("../object").keySetter;
 
 var maybe = require("../monad/maybe").maybe;
 
@@ -12483,49 +12521,31 @@ function appendParam(queryString, value, param) {
  * @param {Array} matches
  * @return {Object}
  */
-var matchToJWT = _.flow(arr.slicer(1), arr.chunk(2), _.zipObject, obj.keySetter("expires_in", parseInt));
+var matchToJWT = _.flow(slicer(1), chunker(2), _.zipObject, keySetter("expires_in", parseInt));
+function link(clientId, redirectUri) {
+  var query = {
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: "https://www.googleapis.com/auth/youtube",
+    response_type: "token"
+  };
+  var root = "https://accounts.google.com/o/oauth2/auth?";
+  return root + _.reduce(query, appendParam, "").slice(0, -1);
+}
 
-var auth = {
-
-  /**
-   * Get the login link
-   *
-   * @param {String} clientID
-   * @param {String} redirectUri
-   * @return {String}
-   */
-  link: function link(clientId, redirectUri) {
-    var query = {
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: "https://www.googleapis.com/auth/youtube",
-      response_type: "token"
-    };
-    var root = "https://accounts.google.com/o/oauth2/auth?";
-    return root + _.reduce(query, appendParam, "").slice(0, -1);
-  },
-
-  /**
-   * Get a token from a hash fragment
-   *
-   * @param {String} fragment
-   * @return {Object}
-   */
-  parse: function parse(fragment) {
-    var result = TOKEN_PATTERN.exec(fragment);
-    return maybe(result, !!!result).bind(matchToJWT).map(function (jwt) {
-      return jwt;
-    });
-  }
-
-};
+function parse(fragment) {
+  var result = TOKEN_PATTERN.exec(fragment);
+  return maybe(result, !!!result).bind(matchToJWT).map(function (jwt) {
+    return jwt;
+  });
+}
 
 /**
  * Get an auth token from a fragment or a cookie
  *
  * @return {String}
  */
-auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token) {
+var token = _.flow(parse.bind(null, window.location.hash), function (token) {
   return maybe(token, !!!token).map(function (jwt) {
     return Cookies.set("access_token", jwt.access_token, {
       expires: jwt.expires_in
@@ -12534,139 +12554,132 @@ auth.token = _.flow(auth.parse.bind(null, window.location.hash), function (token
 }, function () {
   return Cookies.get("access_token");
 });
-
-module.exports = auth;
+exports.token = token;
 
 },{"../array":5,"../monad/maybe":9,"../object":10,"cookies-js":2,"lodash":3}],7:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+/**
+ * Get the first element matching the selector
+ */
+exports.first = first;
+
+/**
+ * Create an element appender function
+ *
+ * @param {HTMLElement} parent
+ * @param {HTMLElement} child
+ * @return {Function}
+ */
+exports.appender = appender;
+
+/**
+ * Apply attributes to an element
+ *
+ * @param {HTMLElement} element
+ * @param {Object} attrs
+ * @return {HTMLElement}
+ */
+exports.attrs = attrs;
+
+/**
+ * Add a text node to the element
+ *
+ * @param {HTMLElement} element
+ * @param {String} text
+ * @return {HTMLElement}
+ */
+exports.text = text;
+
+/**
+ * Create an html element
+ *
+ * @param {String} tag
+ * @param {Object} attrs
+ * @param {String} text
+ * @return {HTMLElement}
+ */
+exports.createElement = createElement;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _ = _interopRequire(require("lodash"));
 
-module.exports = {
+function first(selector) {
+  var list = document.querySelectorAll(selector);
+  return list.length > 0 ? list[0] : undefined;
+}
 
-  /**
-   * Get the first element matching the selector
-   */
-  first: function first(selector) {
-    var list = document.querySelectorAll(selector);
-    return list.length > 0 ? list[0] : undefined;
-  },
+function appender(parent, child) {
+  return function () {
+    parent.appendChild(child);
+  };
+}
 
-  /**
-   * Create an element appender function
-   *
-   * @param {HTMLElement} parent
-   * @param {HTMLElement} child
-   * @return {Function}
-   */
-  appender: function appender(parent, child) {
-    return function () {
-      parent.appendChild(child);
-    };
-  },
+function attrs(element, attrs) {
+  if (attrs) {
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
-  /**
-   * Apply attributes to an element
-   *
-   * @param {HTMLElement} element
-   * @param {Object} attrs
-   * @return {HTMLElement}
-   */
-  attrs: (function (_attrs) {
-    var _attrsWrapper = function attrs(_x, _x2) {
-      return _attrs.apply(this, arguments);
-    };
+    try {
+      for (var _iterator = Object.keys(attrs)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var k = _step.value;
 
-    _attrsWrapper.toString = function () {
-      return _attrs.toString();
-    };
-
-    return _attrsWrapper;
-  })(function (element, attrs) {
-    if (attrs) {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
+        element[k] = attrs[k];
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
       try {
-        for (var _iterator = Object.keys(attrs)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var k = _step.value;
-
-          element[k] = attrs[k];
+        if (!_iteratorNormalCompletion && _iterator["return"]) {
+          _iterator["return"]();
         }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"]) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
+        if (_didIteratorError) {
+          throw _iteratorError;
         }
       }
     }
-    return element;
-  }),
-
-  /**
-   * Add a text node to the element
-   *
-   * @param {HTMLElement} element
-   * @param {String} text
-   * @return {HTMLElement}
-   */
-  text: (function (_text) {
-    var _textWrapper = function text(_x, _x2) {
-      return _text.apply(this, arguments);
-    };
-
-    _textWrapper.toString = function () {
-      return _text.toString();
-    };
-
-    return _textWrapper;
-  })(function (element, text) {
-    if (text) {
-      element.appendChild(document.createTextNode(text));
-    }
-    return element;
-  }),
-
-  /**
-   * Create an html element
-   *
-   * @param {String} tag
-   * @param {Object} attrs
-   * @param {String} text
-   * @return {HTMLElement}
-   */
-  createElement: function createElement(tag, attrs, text) {
-    return _.flow(_.partialRight(this.attrs, attrs), _.partialRight(this.text, text))(document.createElement(tag));
   }
-};
+  return element;
+}
+
+function text(element, text) {
+  if (text) {
+    element.appendChild(document.createTextNode(text));
+  }
+  return element;
+}
+
+function createElement(tag, attrs, text) {
+  return _.flow(_.partialRight(this.attrs, attrs), _.partialRight(this.text, text))(document.createElement(tag));
+}
 
 },{"lodash":3}],8:[function(require,module,exports){
+
+/**
+ * Conditionally invoke a function
+ *
+ * @param {Boolean} bool
+ * @param {Function} func
+ */
 "use strict";
 
-module.exports = {
-  /**
-   * Conditionally invoke a function
-   *
-   * @param {Boolean} bool
-   * @param {Function} func
-   */
-  invokeIf: function invokeIf(bool, func /** arguments */) {
-    if (!!bool) {
-      return func.apply(null, Array.prototype.slice.call(arguments, 2));
-    }
+exports.invokeIf = invokeIf;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function invokeIf(bool, func /** arguments */) {
+  if (!!bool) {
+    return func.apply(null, Array.prototype.slice.call(arguments, 2));
   }
-};
+}
 
 },{}],9:[function(require,module,exports){
 
@@ -12728,168 +12741,177 @@ exports.NOTHING = NOTHING;
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+/**
+ * Return a function that applies a function
+ * to an object's key.
+ *
+ * @param {Object} object
+ * @param {String} key
+ * @param {Function} fn
+ * @return {Function}
+ */
+exports.keySetter = keySetter;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _ = _interopRequire(require("lodash"));
 
-module.exports = {
-
-  /**
-   * Return a function that applies a function
-   * to an object's key.
-   *
-   * @param {Object} object
-   * @param {String} key
-   * @param {Function} fn
-   * @return {Function}
-   */
-  keySetter: function keySetter(key, fn) {
-    return function (object) {
-      var obj = _.clone(object);
-      obj[key] = fn(object[key]);
-      return obj;
-    };
-  }
-};
+function keySetter(key, fn) {
+  return function (object) {
+    var obj = _.clone(object);
+    obj[key] = fn(object[key]);
+    return obj;
+  };
+}
 
 },{"lodash":3}],11:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+/**
+ * @return {SpeechRecognition}
+ */
+exports.create = create;
+
+/**
+ * Make a SpeechRecognition object streamable
+ *
+ * @param {SpeechRecognition} speech
+ * @return {SpeechRecognition}
+ */
+exports.streamable = streamable;
+
+/**
+ * Start listening for speech
+ *
+ * @param {SpeechRecognition} speech
+ * @return {SpeechRecognition}
+ */
+exports.start = start;
+
+/**
+ * Stop listening for speech
+ *
+ * @param {SpeechRecognition} speech
+ */
+exports.stop = stop;
+
+/**
+ * Listen for a speech event
+ *
+ * @param {SpeechRecognition} speech
+ * @param {String} event
+ * @param {Function} listener
+ * @return {SpeechRecognition}
+ */
+exports.listen = listen;
+
+/**
+ * Returns a confident listener. The listener
+ * will only execute if the level of confidence is reached.
+ *
+ * @param {Function} listener
+ * @param {Number} level
+ * @return {Function}
+ */
+exports.confident = confident;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _ = _interopRequire(require("lodash"));
 
-var speech = {
+function create() {
+  return new webkitSpeechRecognition();
+}
 
-  /**
-   * @return {SpeechRecognition}
-   */
-  create: function create() {
-    return new webkitSpeechRecognition();
-  },
+function streamable(speech) {
+  speech.continuous = true;
+  speech.interimResults = true;
+  return speech;
+}
 
-  /**
-   * Make a SpeechRecognition object streamable
-   *
-   * @param {SpeechRecognition} speech
-   * @return {SpeechRecognition}
-   */
-  streamable: function streamable(speech) {
-    speech.continuous = true;
-    speech.interimResults = true;
-    return speech;
-  },
+function start(speech) {
+  speech.start();
+  return speech;
+}
 
-  /**
-   * Start listening for speech
-   *
-   * @param {SpeechRecognition} speech
-   * @return {SpeechRecognition}
-   */
-  start: function start(speech) {
-    speech.start();
-    return speech;
-  },
+function stop(speech) {
+  speech.stop();
+}
 
-  /**
-   * Stop listening for speech
-   *
-   * @param {SpeechRecognition} speech
-   */
-  stop: function stop(speech) {
-    speech.stop();
-  },
+function listen(speech, event, listener) {
+  speech["on" + event] = listener;
+  return speech;
+}
 
-  /**
-   * Listen for a speech event
-   *
-   * @param {SpeechRecognition} speech
-   * @param {String} event
-   * @param {Function} listener
-   * @return {SpeechRecognition}
-   */
-  listen: function listen(speech, event, listener) {
-    speech["on" + event] = listener;
-    return speech;
-  },
-
-  /**
-   * Returns a confident listener. The listener
-   * will only execute if the level of confidence is reached.
-   *
-   * @param {Function} listener
-   * @param {Number} level
-   * @return {Function}
-   */
-  confident: function confident(listener, level) {
-    level || (level = 80);
-    return function (event) {
-      var results = event.results;
-      var result = results[results.length - 1][0];
-      var confidence = result.confidence * 100;
-      if (confidence > level) {
-        listener(result, event);
-      }
-    };
-  }
-
-};
+function confident(listener, level) {
+  level || (level = 80);
+  return function (event) {
+    var results = event.results;
+    var result = results[results.length - 1][0];
+    var confidence = result.confidence * 100;
+    if (confidence > level) {
+      listener(result, event);
+    }
+  };
+}
 
 /**
  * Start streaming speech recognition
  *
  * @return {SpeechRecognition}
  */
-speech.stream = _.flow(speech.create, speech.streamable, speech.start);
-
-module.exports = speech;
+var stream = _.flow(create, streamable, start);
+exports.stream = stream;
 
 },{"lodash":3}],12:[function(require,module,exports){
+/**
+ * Return a uri for making a youtube query
+ *
+ * @param {String} token
+ * @param {String} query
+ * @return {String}
+ */
 "use strict";
 
-module.exports = {
-  /**
-   * Return a uri for making a youtube query
-   *
-   * @param {String} token
-   * @param {String} query
-   * @return {String}
-   */
-  uri: function uri(token, query) {
-    return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
-  },
+exports.uri = uri;
 
-  /**
-   * Return a promise with the JSON result of a youtube query
-   *
-   * @param {String} token
-   * @param {String} query
-   * @return {Promise}
-   */
-  query: (function (_query) {
-    var _queryWrapper = function query(_x, _x2) {
-      return _query.apply(this, arguments);
-    };
+/**
+ * Return a promise with the JSON result of a youtube query
+ *
+ * @param {String} token
+ * @param {String} query
+ * @return {Promise}
+ */
+exports.query = query;
 
-    _queryWrapper.toString = function () {
-      return _query.toString();
-    };
+/**
+ * Return a video url used for embedding a
+ * video from youtube.
+ *
+ * @param {Object} video
+ * @return {String}
+ */
+exports.videoUrl = videoUrl;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-    return _queryWrapper;
-  })(function (token, query) {
-    return fetch(this.uri(token, query)).then(function (resp) {
-      return resp.text();
-    }).then(JSON.parse);
-  }),
+function uri(token, query) {
+  return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
+}
 
-  /**
-   * Return a video url used for embedding a
-   * video from youtube.
-   *
-   * @param {Object} video
-   * @return {String}
-   */
-  videoUrl: function videoUrl(video) {
-    return "http://www.youtube.com/v/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
-  }
-};
+function query(token, query) {
+  return fetch(uri(token, query)).then(function (resp) {
+    return resp.text();
+  }).then(JSON.parse);
+}
+
+function videoUrl(video) {
+  return "http://www.youtube.com/v/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
+}
 
 },{}]},{},[1]);

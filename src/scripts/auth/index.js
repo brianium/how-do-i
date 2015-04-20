@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import {slicer, chunker} from '../array';
-import obj from '../object';
+import {keySetter} from '../object';
 import {maybe} from '../monad/maybe';
 import Cookies from 'cookies-js';
 
@@ -29,7 +29,7 @@ const matchToJWT = _.flow(
   slicer(1),
   chunker(2),
   _.zipObject,
-  obj.keySetter('expires_in', parseInt)
+  keySetter('expires_in', parseInt)
 );
 
 /**

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {clone} from 'lodash';
 
 /**
  * Return a function that applies a function
@@ -11,7 +11,7 @@ import _ from 'lodash';
  */
 export function keySetter(key, fn) {
   return function(object) {
-    let obj = _.clone(object);
+    let obj = clone(object);
     obj[key] = fn(object[key]);
     return obj;
   }

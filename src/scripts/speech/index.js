@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {flow} from 'lodash';
 
 /**
  * @return {SpeechRecognition}
@@ -77,7 +77,7 @@ export function confident(listener, level) {
  *
  * @return {SpeechRecognition}
  */
-export const stream = _.flow(
+export const stream = flow(
   create,
   streamable,
   start

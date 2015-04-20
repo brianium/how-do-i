@@ -1,4 +1,3 @@
-
 /**
  * Conditionally invoke a function
  *

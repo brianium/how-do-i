@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {chunk} from 'lodash';
 
 /**
  * Return a function with a pre applied start point for slicing
@@ -21,6 +21,6 @@ export function slicer(start) {
  */
 export function chunker(size) {
   return function(array) {
-    return _.chunk(array, size);
+    return chunk(array, size);
   }
 }

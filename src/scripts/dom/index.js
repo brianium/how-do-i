@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {flow, partialRight} from 'lodash';
 
 /**
  * Get the first element matching the selector
@@ -60,8 +60,8 @@ export function text(element, text) {
  * @return {HTMLElement}
  */
 export function createElement(tag, attrs, text) {
-  return _.flow(
-    _.partialRight(this.attrs, attrs),
-    _.partialRight(this.text, text)
+  return flow(
+    partialRight(this.attrs, attrs),
+    partialRight(this.text, text)
   )(document.createElement(tag));
 }

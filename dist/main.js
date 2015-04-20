@@ -12360,8 +12360,6 @@ document.addEventListener("DOMContentLoaded", run(function (token) {
 },{}],4:[function(require,module,exports){
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
 var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
 /**
@@ -12395,13 +12393,13 @@ var invokeIf = require("./functions").invokeIf;
 
 var stop = require("./speech").stop;
 
-var _ = _interopRequire(require("lodash"));
+var flow = require("lodash").flow;
 
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
 var VIDEO_SEARCH = /how[\s]do[\s]i/i;
 function run(authorized) {
-  return _.flow(function () {
+  return flow(function () {
     return auth.link(CLIENT_ID, REDIRECT_URI);
   }, function (link) {
     return first("#login-link").href = link;
@@ -12424,9 +12422,7 @@ function onResult(token, result, event) {
 }
 
 },{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"./youtube":12,"lodash":3}],5:[function(require,module,exports){
-"use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 /**
  * Return a function with a pre applied start point for slicing
@@ -12435,6 +12431,8 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
  * @param {Number} start
  * @return {Function}
  */
+"use strict";
+
 exports.slicer = slicer;
 
 /**
@@ -12448,7 +12446,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ = _interopRequire(require("lodash"));
+var chunk = require("lodash").chunk;
 
 function slicer(start) {
   return function (array) {
@@ -12458,7 +12456,7 @@ function slicer(start) {
 
 function chunker(size) {
   return function (array) {
-    return _.chunk(array, size);
+    return chunk(array, size);
   };
 }
 
@@ -12487,7 +12485,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ = _interopRequire(require("lodash"));
+var _lodash = require("lodash");
+
+var zipObject = _lodash.zipObject;
+var reduce = _lodash.reduce;
+var flow = _lodash.flow;
 
 var _array = require("../array");
 
@@ -12521,7 +12523,7 @@ function appendParam(queryString, value, param) {
  * @param {Array} matches
  * @return {Object}
  */
-var matchToJWT = _.flow(slicer(1), chunker(2), _.zipObject, keySetter("expires_in", parseInt));
+var matchToJWT = flow(slicer(1), chunker(2), zipObject, keySetter("expires_in", parseInt));
 function link(clientId, redirectUri) {
   var query = {
     client_id: clientId,
@@ -12530,7 +12532,7 @@ function link(clientId, redirectUri) {
     response_type: "token"
   };
   var root = "https://accounts.google.com/o/oauth2/auth?";
-  return root + _.reduce(query, appendParam, "").slice(0, -1);
+  return root + reduce(query, appendParam, "").slice(0, -1);
 }
 
 function parse(fragment) {
@@ -12545,7 +12547,7 @@ function parse(fragment) {
  *
  * @return {String}
  */
-var token = _.flow(parse.bind(null, window.location.hash), function (token) {
+var token = flow(parse.bind(null, window.location.hash), function (token) {
   return maybe(token, !!!token).map(function (jwt) {
     return Cookies.set("access_token", jwt.access_token, {
       expires: jwt.expires_in
@@ -12557,13 +12559,13 @@ var token = _.flow(parse.bind(null, window.location.hash), function (token) {
 exports.token = token;
 
 },{"../array":5,"../monad/maybe":9,"../object":10,"cookies-js":2,"lodash":3}],7:[function(require,module,exports){
-"use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 /**
  * Get the first element matching the selector
  */
+"use strict";
+
 exports.first = first;
 
 /**
@@ -12606,7 +12608,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ = _interopRequire(require("lodash"));
+var _lodash = require("lodash");
+
+var flow = _lodash.flow;
+var partialRight = _lodash.partialRight;
 
 function first(selector) {
   var list = document.querySelectorAll(selector);
@@ -12657,11 +12662,10 @@ function text(element, text) {
 }
 
 function createElement(tag, attrs, text) {
-  return _.flow(_.partialRight(this.attrs, attrs), _.partialRight(this.text, text))(document.createElement(tag));
+  return flow(partialRight(this.attrs, attrs), partialRight(this.text, text))(document.createElement(tag));
 }
 
 },{"lodash":3}],8:[function(require,module,exports){
-
 /**
  * Conditionally invoke a function
  *
@@ -12737,9 +12741,7 @@ var NOTHING = maybe(null, true);
 exports.NOTHING = NOTHING;
 
 },{}],10:[function(require,module,exports){
-"use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 /**
  * Return a function that applies a function
@@ -12750,29 +12752,31 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
  * @param {Function} fn
  * @return {Function}
  */
+"use strict";
+
 exports.keySetter = keySetter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ = _interopRequire(require("lodash"));
+var clone = require("lodash").clone;
 
 function keySetter(key, fn) {
   return function (object) {
-    var obj = _.clone(object);
+    var obj = clone(object);
     obj[key] = fn(object[key]);
     return obj;
   };
 }
 
 },{"lodash":3}],11:[function(require,module,exports){
-"use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 /**
  * @return {SpeechRecognition}
  */
+"use strict";
+
 exports.create = create;
 
 /**
@@ -12821,7 +12825,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _ = _interopRequire(require("lodash"));
+var flow = require("lodash").flow;
 
 function create() {
   return new webkitSpeechRecognition();
@@ -12864,7 +12868,7 @@ function confident(listener, level) {
  *
  * @return {SpeechRecognition}
  */
-var stream = _.flow(create, streamable, start);
+var stream = flow(create, streamable, start);
 exports.stream = stream;
 
 },{"lodash":3}],12:[function(require,module,exports){

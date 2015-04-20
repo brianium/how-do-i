@@ -4,7 +4,7 @@ import * as yt from './youtube';
 import {first} from './dom';
 import {invokeIf} from './functions';
 import {stop} from './speech';
-import _ from 'lodash';
+import {flow} from 'lodash';
 
 const CLIENT_ID = '557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com';
 const REDIRECT_URI = 'http://localhost:8000';
@@ -18,7 +18,7 @@ const VIDEO_SEARCH = /how[\s]do[\s]i/i;
  * @return {Function}
  */
 export function run(authorized) {
-  return _.flow(
+  return flow(
     () => auth.link(CLIENT_ID, REDIRECT_URI),
     link => first('#login-link').href = link,
     auth.token,

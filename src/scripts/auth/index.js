@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {zipObject, reduce, flow} from 'lodash';
 import {slicer, chunker} from '../array';
 import {keySetter} from '../object';
 import {maybe} from '../monad/maybe';
@@ -25,10 +25,10 @@ function appendParam(queryString, value, param) {
  * @param {Array} matches
  * @return {Object}
  */
-const matchToJWT = _.flow(
+const matchToJWT = flow(
   slicer(1),
   chunker(2),
-  _.zipObject,
+  zipObject,
   keySetter('expires_in', parseInt)
 );
 
@@ -47,7 +47,7 @@ export function link(clientId, redirectUri) {
     response_type: 'token'
   };
   let root = 'https://accounts.google.com/o/oauth2/auth?';
-  return root + _.reduce(query, appendParam, '').slice(0, -1);
+  return root + reduce(query, appendParam, '').slice(0, -1);
 }
 
 /**
@@ -68,7 +68,7 @@ export function parse(fragment) {
  *
  * @return {String}
  */
-export const token = _.flow(
+export const token = flow(
   parse.bind(null, window.location.hash),
   token => maybe(token, !!!token).map(jwt => Cookies.set('access_token', jwt.access_token, {
     expires: jwt.expires_in

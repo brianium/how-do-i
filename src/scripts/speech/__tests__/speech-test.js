@@ -1,6 +1,6 @@
-jest.dontMock('../index')
+jest.dontMock('../')
 
-import speech from '../index';
+import * as speech from '../';
 
 describe('speech', function () {
 

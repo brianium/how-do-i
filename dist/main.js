@@ -4,7 +4,7 @@
 var _app = require("./app");
 
 var run = _app.run;
-var onResult = _app.onResult;
+var video = _app.video;
 
 var first = require("./dom").first;
 
@@ -21,8 +21,7 @@ document.addEventListener("DOMContentLoaded", run(function (token) {
   first(".content-unauthorized").classList.add("hidden");
   first(".content-authorized").classList.remove("hidden");
 
-  var listener = onResult.bind(null, token);
-  listen(stream(), "result", confident(listener));
+  listen(stream(), "result", confident(video.bind(null, token)));
 }));
 
 },{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){
@@ -12378,7 +12377,7 @@ exports.run = run;
  * @param {Object} result
  * @param {Event} event
  */
-exports.onResult = onResult;
+exports.video = video;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -12408,7 +12407,7 @@ function run(authorized) {
   });
 }
 
-function onResult(token, result, event) {
+function video(token, result, event) {
   if (VIDEO_SEARCH.test(result.transcript)) {
     var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
     yt.query(token, "how to " + term).then(function (result) {
@@ -12929,7 +12928,7 @@ function query(token, query) {
 }
 
 function videoUrl(video) {
-  return "http://www.youtube.com/v/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
+  return "http://www.youtube.com/embed/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
 }
 
 },{}]},{},[1]);

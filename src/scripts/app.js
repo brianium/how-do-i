@@ -33,7 +33,7 @@ export function run(authorized) {
  * @param {Object} result
  * @param {Event} event
  */
-export function onResult(token, result, event) {
+export function video(token, result, event) {
   if (VIDEO_SEARCH.test(result.transcript)) {
     let term = result.transcript.replace(VIDEO_SEARCH, '').trim();
     yt.query(token, `how to ${term}`)

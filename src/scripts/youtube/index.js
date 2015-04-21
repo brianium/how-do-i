@@ -30,5 +30,5 @@ export function query(token, query) {
  * @return {String}
  */
 export function videoUrl(video) {
-  return `http://www.youtube.com/v/${video.id.videoId}?version=3&enablejsapi=1&autoplay=1`;
+  return `http://www.youtube.com/embed/${video.id.videoId}?version=3&enablejsapi=1&autoplay=1`;
 }

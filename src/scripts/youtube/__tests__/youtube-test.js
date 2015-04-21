@@ -17,7 +17,7 @@ describe('youtube', function () {
       }
     };
     let videoUrl = yt.videoUrl(video);
-    let expected = 'http://www.youtube.com/v/12345?version=3&enablejsapi=1&autoplay=1';
+    let expected = 'http://www.youtube.com/embed/12345?version=3&enablejsapi=1&autoplay=1';
 
     expect(videoUrl).toBe(expected);
   });

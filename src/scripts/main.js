@@ -1,4 +1,4 @@
-import {run, onResult} from './app';
+import {run, video} from './app';
 import {first} from './dom';
 import {listen, stream, confident} from './speech';
 
@@ -8,7 +8,6 @@ import {listen, stream, confident} from './speech';
 document.addEventListener('DOMContentLoaded', run(token => {
   first('.content-unauthorized').classList.add('hidden');
   first('.content-authorized').classList.remove('hidden');
-
-  let listener = onResult.bind(null, token);
-  listen(stream(), 'result', confident(listener));
+  
+  listen(stream(), 'result', confident(video.bind(null, token)));
 }));

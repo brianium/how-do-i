@@ -1,15 +1,14 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
-var _app = require("./app");
-
-var authorized = _app.authorized;
-var run = _app.run;
+var authorized = require("./app").authorized;
 
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", authorized(run));
+document.addEventListener("DOMContentLoaded", authorized(function (result, event) {
+  console.log(result);
+}));
 
 },{"./app":4}],2:[function(require,module,exports){
 /*
@@ -12349,6 +12348,13 @@ document.addEventListener("DOMContentLoaded", authorized(run));
 var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
 /**
+ * Function run when the user is authenticated.
+ *
+ * @param {String} token
+ */
+exports.run = run;
+
+/**
  * Return an authorized function. The passed in
  * function is invoked with a token when ready.
  *
@@ -12356,29 +12362,11 @@ var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? ob
  * @return {Function}
  */
 exports.authorized = authorized;
-
-/**
- * A listener for search terms
- *
- * @param {String} token
- * @param {Object} result
- * @param {Event} event
- */
-exports.video = video;
-
-/**
- * Function run when the user is authenticated.
- *
- * @param {String} token
- */
-exports.run = run;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
 var auth = _interopRequireWildcard(require("./auth"));
-
-var yt = _interopRequireWildcard(require("./youtube"));
 
 var first = require("./dom").first;
 
@@ -12397,36 +12385,34 @@ var partial = _lodash.partial;
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
 var VIDEO_SEARCH = /how[\s]do[\s]i/i;
-function authorized(ready) {
-  return flow(function () {
-    return auth.link(CLIENT_ID, REDIRECT_URI);
-  }, function (link) {
+
+/**
+ * Return a result listener that is invoked if the result transcript
+ * contains the how do i pattern.
+ *
+ * @param {Function} listener
+ * @return {Function}
+ */
+function result(listener) {
+  return function (result, event) {
+    invokeIf(VIDEO_SEARCH.test(result.transcript), listener, result, event);
+  };
+}
+function run(token, listener) {
+  first(".content-unauthorized").classList.add("hidden");
+  first(".content-authorized").classList.remove("hidden");
+  recognize(result(listener));
+}
+
+function authorized(listener) {
+  return flow(partial(auth.link, CLIENT_ID, REDIRECT_URI), function (link) {
     return first("#login-link").href = link;
   }, auth.token, function (token) {
-    return invokeIf(!!token, ready, token);
+    return invokeIf(!!token, partial(run, token, listener), token);
   });
 }
 
-function video(token, result, event) {
-  if (VIDEO_SEARCH.test(result.transcript)) {
-    var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
-    yt.query(token, "how to " + term).then(function (result) {
-      return result.items[0];
-    }).then(function (video) {
-      return first("#video").src = yt.videoUrl(video);
-    }).then(function () {
-      return stop(event.target);
-    });
-  }
-}
-
-function run(token) {
-  first(".content-unauthorized").classList.add("hidden");
-  first(".content-authorized").classList.remove("hidden");
-  recognize(partial(video, token));
-}
-
-},{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"./youtube":12,"lodash":3}],5:[function(require,module,exports){
+},{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"lodash":3}],5:[function(require,module,exports){
 
 
 /**
@@ -12904,51 +12890,4 @@ function recognize(listener) {
   return speech;
 }
 
-},{"lodash":3}],12:[function(require,module,exports){
-/**
- * Return a uri for making a youtube query
- *
- * @param {String} token
- * @param {String} query
- * @return {String}
- */
-"use strict";
-
-exports.uri = uri;
-
-/**
- * Return a promise with the JSON result of a youtube query
- *
- * @param {String} token
- * @param {String} query
- * @return {Promise}
- */
-exports.query = query;
-
-/**
- * Return a video url used for embedding a
- * video from youtube.
- *
- * @param {Object} video
- * @return {String}
- */
-exports.videoUrl = videoUrl;
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-function uri(token, query) {
-  return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + query + "&type=video&videoEmbeddable=true";
-}
-
-function query(token, query) {
-  return fetch(uri(token, query)).then(function (resp) {
-    return resp.text();
-  }).then(JSON.parse);
-}
-
-function videoUrl(video) {
-  return "http://www.youtube.com/embed/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
-}
-
-},{}]},{},[1]);
+},{"lodash":3}]},{},[1]);

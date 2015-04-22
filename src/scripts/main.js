@@ -1,6 +1,6 @@
 import {run, video} from './app';
 import {first} from './dom';
-import {listen, stream, confident} from './speech';
+import {recognize} from './speech';
 
 /**
  * Function run when the user is authenticated.
@@ -10,7 +10,7 @@ import {listen, stream, confident} from './speech';
 let start = function(token) {
   first('.content-unauthorized').classList.add('hidden');
   first('.content-authorized').classList.remove('hidden');
-  listen(stream(), 'result', confident(video.bind(null, token)));
+  recognize(video.bind(null, token));
 }
 
 /**

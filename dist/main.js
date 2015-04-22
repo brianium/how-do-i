@@ -8,16 +8,17 @@ var video = _app.video;
 
 var first = require("./dom").first;
 
-var _speech = require("./speech");
+var recognize = require("./speech").recognize;
 
-var listen = _speech.listen;
-var stream = _speech.stream;
-var confident = _speech.confident;
-
+/**
+ * Function run when the user is authenticated.
+ *
+ * @param {String} token
+ */
 var start = function start(token) {
   first(".content-unauthorized").classList.add("hidden");
   first(".content-authorized").classList.remove("hidden");
-  listen(stream(), "result", confident(video.bind(null, token)));
+  recognize(video.bind(null, token));
 };
 
 /**
@@ -12835,6 +12836,15 @@ exports.listen = listen;
  * @return {Function}
  */
 exports.confident = confident;
+
+/**
+ * Start streaming speech recognition and attach
+ * a confident result listener.
+ *
+ * @param {Function}
+ * @return {SpeechRecognition}
+ */
+exports.recognize = recognize;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -12882,8 +12892,13 @@ function confident(listener, level) {
  *
  * @return {SpeechRecognition}
  */
-var stream = flow(create, streamable, start);
-exports.stream = stream;
+var stream = flow(create, streamable, start);exports.stream = stream;
+
+function recognize(listener) {
+  var speech = stream();
+  listen(speech, "result", confident(listener));
+  return speech;
+}
 
 },{"lodash":3}],12:[function(require,module,exports){
 /**

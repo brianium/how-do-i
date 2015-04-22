@@ -82,3 +82,16 @@ export const stream = flow(
   streamable,
   start
 )
+
+/**
+ * Start streaming speech recognition and attach
+ * a confident result listener.
+ *
+ * @param {Function}
+ * @return {SpeechRecognition}
+ */
+export function recognize(listener) {
+  let speech = stream();
+  listen(speech, 'result', confident(listener));
+  return speech;
+}

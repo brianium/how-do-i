@@ -6,9 +6,7 @@ var authorized = require("./app").authorized;
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", authorized(function (result, event) {
-  console.log(result);
-}));
+document.addEventListener("DOMContentLoaded", authorized(function (result, event) {}));
 
 },{"./app":4}],2:[function(require,module,exports){
 /*

@@ -6,7 +6,8 @@
  * @return {String}
  */
 export function uri(token, query) {
-    return `https://www.googleapis.com/youtube/v3/search?access_token=${token}&part=id,snippet&q=${query}&type=video&videoEmbeddable=true`
+    let q = encodeURIComponent(query);
+    return `https://www.googleapis.com/youtube/v3/search?access_token=${token}&part=id,snippet&q=${q}&type=video&videoEmbeddable=true`
 }
 
 /**

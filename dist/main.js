@@ -3,30 +3,15 @@
 
 var _app = require("./app");
 
+var authorized = _app.authorized;
 var run = _app.run;
-var video = _app.video;
-
-var first = require("./dom").first;
-
-var recognize = require("./speech").recognize;
-
-/**
- * Function run when the user is authenticated.
- *
- * @param {String} token
- */
-var start = function start(token) {
-  first(".content-unauthorized").classList.add("hidden");
-  first(".content-authorized").classList.remove("hidden");
-  recognize(video.bind(null, token));
-};
 
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", run(start));
+document.addEventListener("DOMContentLoaded", authorized(run));
 
-},{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){
+},{"./app":4}],2:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -12364,13 +12349,13 @@ document.addEventListener("DOMContentLoaded", run(start));
 var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
 /**
- * Return an application running function. The passed in
- * function is invoked with a token if found.
+ * Return an authorized function. The passed in
+ * function is invoked with a token when ready.
  *
- * @param {Function} authorized
+ * @param {Function} ready
  * @return {Function}
  */
-exports.run = run;
+exports.authorized = authorized;
 
 /**
  * A listener for search terms
@@ -12380,6 +12365,13 @@ exports.run = run;
  * @param {Event} event
  */
 exports.video = video;
+
+/**
+ * Function run when the user is authenticated.
+ *
+ * @param {String} token
+ */
+exports.run = run;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -12392,20 +12384,26 @@ var first = require("./dom").first;
 
 var invokeIf = require("./functions").invokeIf;
 
-var stop = require("./speech").stop;
+var _speech = require("./speech");
 
-var flow = require("lodash").flow;
+var recognize = _speech.recognize;
+var stop = _speech.stop;
+
+var _lodash = require("lodash");
+
+var flow = _lodash.flow;
+var partial = _lodash.partial;
 
 var CLIENT_ID = "557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com";
 var REDIRECT_URI = "http://localhost:8000";
 var VIDEO_SEARCH = /how[\s]do[\s]i/i;
-function run(authorized) {
+function authorized(ready) {
   return flow(function () {
     return auth.link(CLIENT_ID, REDIRECT_URI);
   }, function (link) {
     return first("#login-link").href = link;
   }, auth.token, function (token) {
-    return invokeIf(!!token, authorized, token);
+    return invokeIf(!!token, ready, token);
   });
 }
 
@@ -12420,6 +12418,12 @@ function video(token, result, event) {
       return stop(event.target);
     });
   }
+}
+
+function run(token) {
+  first(".content-unauthorized").classList.add("hidden");
+  first(".content-authorized").classList.remove("hidden");
+  recognize(partial(video, token));
 }
 
 },{"./auth":6,"./dom":7,"./functions":8,"./speech":11,"./youtube":12,"lodash":3}],5:[function(require,module,exports){

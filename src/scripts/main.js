@@ -2,6 +2,11 @@ import {run, video} from './app';
 import {first} from './dom';
 import {listen, stream, confident} from './speech';
 
+/**
+ * Function run when the user is authenticated.
+ *
+ * @param {String} token
+ */
 let start = function(token) {
   first('.content-unauthorized').classList.add('hidden');
   first('.content-authorized').classList.remove('hidden');

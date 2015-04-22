@@ -14,15 +14,16 @@ var listen = _speech.listen;
 var stream = _speech.stream;
 var confident = _speech.confident;
 
+var start = function start(token) {
+  first(".content-unauthorized").classList.add("hidden");
+  first(".content-authorized").classList.remove("hidden");
+  listen(stream(), "result", confident(video.bind(null, token)));
+};
+
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", run(function (token) {
-  first(".content-unauthorized").classList.add("hidden");
-  first(".content-authorized").classList.remove("hidden");
-
-  listen(stream(), "result", confident(video.bind(null, token)));
-}));
+document.addEventListener("DOMContentLoaded", run(start));
 
 },{"./app":4,"./dom":7,"./speech":11}],2:[function(require,module,exports){
 /*

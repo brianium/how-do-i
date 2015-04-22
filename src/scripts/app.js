@@ -11,14 +11,16 @@ const VIDEO_SEARCH = /how[\s]do[\s]i/i;
 
 /**
  * Return a result listener that is invoked if the result transcript
- * contains the how do i pattern.
+ * contains the how do i pattern. The listener will be invoked with the
+ * term being searched for.
  *
  * @param {Function} listener
  * @return {Function}
  */
-function result(listener) {
+function result(listener, token) {
   return function(result, event) {
-    invokeIf(VIDEO_SEARCH.test(result.transcript), listener, result, event);
+    let term = result.transcript.replace(VIDEO_SEARCH, '').trim();
+    invokeIf(VIDEO_SEARCH.test(result.transcript), listener, token, term, event);
   };
 }
 
@@ -30,7 +32,7 @@ function result(listener) {
 export function run(token, listener) {
   first('.content-unauthorized').classList.add('hidden');
   first('.content-authorized').classList.remove('hidden');
-  recognize(result(listener));
+  recognize(result(listener, token));
 }
 
 /**

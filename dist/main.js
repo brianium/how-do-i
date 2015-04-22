@@ -3,12 +3,27 @@
 
 var authorized = require("./app").authorized;
 
+var stop = require("./speech").stop;
+
+var _youtube = require("./youtube");
+
+var query = _youtube.query;
+var videoUrl = _youtube.videoUrl;
+
+var first = require("./dom").first;
+
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", authorized(function (result, event) {}));
+document.addEventListener("DOMContentLoaded", authorized(function (token, term, event) {
+  query(token, "how to " + term).then(function (result) {
+    return result.items[0];
+  }).then(function (video) {
+    return first("#video").src = videoUrl(video);
+  }).then(stop.bind(null, event.target));
+}));
 
-},{"./app":4}],2:[function(require,module,exports){
+},{"./app":4,"./dom":7,"./speech":11,"./youtube":12}],2:[function(require,module,exports){
 /*
  * Cookies.js - 1.2.1
  * https://github.com/ScottHamper/Cookies
@@ -12386,20 +12401,22 @@ var VIDEO_SEARCH = /how[\s]do[\s]i/i;
 
 /**
  * Return a result listener that is invoked if the result transcript
- * contains the how do i pattern.
+ * contains the how do i pattern. The listener will be invoked with the
+ * term being searched for.
  *
  * @param {Function} listener
  * @return {Function}
  */
-function result(listener) {
+function result(listener, token) {
   return function (result, event) {
-    invokeIf(VIDEO_SEARCH.test(result.transcript), listener, result, event);
+    var term = result.transcript.replace(VIDEO_SEARCH, "").trim();
+    invokeIf(VIDEO_SEARCH.test(result.transcript), listener, token, term, event);
   };
 }
 function run(token, listener) {
   first(".content-unauthorized").classList.add("hidden");
   first(".content-authorized").classList.remove("hidden");
-  recognize(result(listener));
+  recognize(result(listener, token));
 }
 
 function authorized(listener) {
@@ -12888,4 +12905,52 @@ function recognize(listener) {
   return speech;
 }
 
-},{"lodash":3}]},{},[1]);
+},{"lodash":3}],12:[function(require,module,exports){
+/**
+ * Return a uri for making a youtube query
+ *
+ * @param {String} token
+ * @param {String} query
+ * @return {String}
+ */
+"use strict";
+
+exports.uri = uri;
+
+/**
+ * Return a promise with the JSON result of a youtube query
+ *
+ * @param {String} token
+ * @param {String} query
+ * @return {Promise}
+ */
+exports.query = query;
+
+/**
+ * Return a video url used for embedding a
+ * video from youtube.
+ *
+ * @param {Object} video
+ * @return {String}
+ */
+exports.videoUrl = videoUrl;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function uri(token, query) {
+  var q = encodeURIComponent(query);
+  return "https://www.googleapis.com/youtube/v3/search?access_token=" + token + "&part=id,snippet&q=" + q + "&type=video&videoEmbeddable=true";
+}
+
+function query(token, query) {
+  return fetch(uri(token, query)).then(function (resp) {
+    return resp.text();
+  }).then(JSON.parse);
+}
+
+function videoUrl(video) {
+  return "http://www.youtube.com/embed/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
+}
+
+},{}]},{},[1]);

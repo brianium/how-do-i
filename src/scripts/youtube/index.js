@@ -33,3 +33,32 @@ export function query(token, query) {
 export function videoUrl(video) {
   return `http://www.youtube.com/embed/${video.id.videoId}?version=3&enablejsapi=1&autoplay=1`;
 }
+
+/**
+ * Return the best result given a pattern
+ *
+ * @param {RegExp} pattern
+ * @param {Object} result1
+ * @param {Object} result2
+ * @return {Object}
+ */
+function best(pattern, result1, result2) {
+  let first = pattern.test(result1.snippet.title);
+  let second = pattern.test(result2.snippet.title);
+  return first && !second ? result1 : result2;
+}
+
+/**
+ * Try to get the most relevant result.
+ *
+ * @param {Object} result
+ * @return {Object}
+ */
+export function relevant(result) {
+  let video = result.items[0];
+  let pattern = /how[\s]*to/i;
+  return result.items.reduce(
+    (prev, current) => best(pattern, current, prev),
+    video
+  );
+}

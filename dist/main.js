@@ -9,16 +9,15 @@ var _youtube = require("./youtube");
 
 var query = _youtube.query;
 var videoUrl = _youtube.videoUrl;
+var relevant = _youtube.relevant;
 
 var first = require("./dom").first;
 
 /**
  * Run the application as soon as dom content has loaded
  */
-document.addEventListener("DOMContentLoaded", authorized(function (token, term, event) {
-  query(token, "how to " + term).then(function (result) {
-    return result.items[0];
-  }).then(function (video) {
+document.addEventListener("DOMContentLoaded", authorized(function main(token, term, event) {
+  query(token, "how to " + term).then(relevant).then(function (video) {
     return first("#video").src = videoUrl(video);
   }).then(stop.bind(null, event.target));
 }));
@@ -12934,6 +12933,14 @@ exports.query = query;
  * @return {String}
  */
 exports.videoUrl = videoUrl;
+
+/**
+ * Try to get the most relevant result.
+ *
+ * @param {Object} result
+ * @return {Object}
+ */
+exports.relevant = relevant;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -12951,6 +12958,27 @@ function query(token, query) {
 
 function videoUrl(video) {
   return "http://www.youtube.com/embed/" + video.id.videoId + "?version=3&enablejsapi=1&autoplay=1";
+}
+
+/**
+ * Return the best result given a pattern
+ *
+ * @param {RegExp} pattern
+ * @param {Object} result1
+ * @param {Object} result2
+ * @return {Object}
+ */
+function best(pattern, result1, result2) {
+  var first = pattern.test(result1.snippet.title);
+  var second = pattern.test(result2.snippet.title);
+  return first && !second ? result1 : result2;
+}
+function relevant(result) {
+  var video = result.items[0];
+  var pattern = /how[\s]*to/i;
+  return result.items.reduce(function (prev, current) {
+    return best(pattern, current, prev);
+  }, video);
 }
 
 },{}]},{},[1]);

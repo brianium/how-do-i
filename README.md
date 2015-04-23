@@ -11,7 +11,7 @@ Simply login and ask:
 How do I <insert something here>
 ```
 
-Currently supports 1 match and is suuuuuuper slow, but computers are fun.
+Currently supports 1 match.
 
 ## Setup
 

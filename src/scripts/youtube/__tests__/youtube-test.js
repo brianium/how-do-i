@@ -21,4 +21,26 @@ describe('youtube', function () {
 
     expect(videoUrl).toBe(expected);
   });
+
+  it('can get a relevant result', function () {
+    let result = {
+      items: [
+        {
+          id:1,
+          snippet: {
+            title: 'This is supposed to be more relevant'
+          }
+        },
+        {
+          id: 2,
+          snippet: {
+            title: 'How to be more relevant'
+          }
+        }
+      ]
+    }
+
+    let relevant = yt.relevant(result);
+    expect(relevant.id).toBe(2);
+  });
 });

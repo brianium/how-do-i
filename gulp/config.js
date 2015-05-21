@@ -22,6 +22,6 @@ module.exports = {
       baseDir: 'dist',
       index: 'index.html'
     },
-    port: 8000
+    port: 4000
   }
 };

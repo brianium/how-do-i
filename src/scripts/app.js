@@ -6,7 +6,7 @@ import {recognize, stop} from './speech';
 import {flow, partial} from 'lodash';
 
 const CLIENT_ID = '557105245399-h8k3tjrrtqc3nbvhbm4u8fr7fkre44i7.apps.googleusercontent.com';
-const REDIRECT_URI = 'http://localhost:8000';
+const REDIRECT_URI = 'http://localhost:4000';
 const VIDEO_SEARCH = /how[\s]do[\s]i/i;
 
 /**
